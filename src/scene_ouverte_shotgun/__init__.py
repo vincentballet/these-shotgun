@@ -8,7 +8,6 @@ from email.mime.text import MIMEText
 import requests
 from bs4 import BeautifulSoup
 
-KNOWN_DATES = ["12 juin 2024", "23 octobre 2024", "18 décembre 2024"]
 FROM = os.getenv("FROM")
 RECIPIENTS = os.getenv("RECIPIENTS").split(",")
 ICLOUD_APP_PASSWORD = os.getenv("ICLOUD_APP_PASSWORD")
@@ -17,28 +16,22 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 def main() -> int:
-    res = requests.get("https://www.le-brise-glace.com/programmation/a-venir/")
+    res = requests.get("https://www.whatdayisit.co.uk/")
     if not res.ok:
         logging.info("Could not fetch HTML page")
         return 1
-
     soup = BeautifulSoup(res.text, "html.parser")
 
-    events = soup.find_all("article", role="event")
-    for event in events:
-        if "ouverte" in event.text and not any(
-            date in event.text for date in KNOWN_DATES
-        ):
-            logging.info("New scène ouverte detected")
-            url = event.find("a")["href"]
-            send_email(
-                subject="Nouvelle scène ouverte détectée!",
-                body=url,
-                recipient_emails=RECIPIENTS,
-            )
-            return 0
-
-    logging.info("No new scène ouverte")
+    # Thanks ChatGPT
+    big_p = soup.find('p', style=lambda value: value and 'font-size:130px' in value)
+    day = big_p.get_text(separator=' ', strip=True) if big_p else "I don't know man"
+    print(day)
+    
+    send_email(
+        subject="What day is it ?",
+        body=day,
+        recipient_emails=RECIPIENTS,
+    )   
     return 0
 
 
