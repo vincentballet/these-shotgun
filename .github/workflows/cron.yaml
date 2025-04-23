@@ -3,7 +3,7 @@ name: Cron
 on:
   workflow_dispatch:
   schedule:
-    - cron:  '27 * * * *'
+    - cron:  '0 8 * * *'
 
 jobs:
   scrap:
