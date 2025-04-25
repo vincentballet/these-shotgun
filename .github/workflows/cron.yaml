@@ -3,8 +3,8 @@ name: Cron
 on:
   workflow_dispatch:
   schedule:
-    - cron:  '0 8 * * *'
-
+    - cron: '5 6 * * *'   # ≈ 8:05 AM Paris time during summer
+    - cron: '5 12 * * *'  # ≈ 2:05 PM Paris time during summer
 jobs:
   scrap:
     runs-on: ubuntu-latest

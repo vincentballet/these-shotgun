@@ -2,6 +2,7 @@ import logging
 import os
 import smtplib
 import sys
+import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -16,22 +17,36 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 def main() -> int:
-    res = requests.get("https://www.whatdayisit.co.uk/")
+    res = requests.get("https://facmedecine.umontpellier.fr/theses/")
     if not res.ok:
         logging.info("Could not fetch HTML page")
         return 1
     soup = BeautifulSoup(res.text, "html.parser")
 
-    # Thanks ChatGPT
-    big_p = soup.find('p', style=lambda value: value and 'font-size:130px' in value)
-    day = big_p.get_text(separator=' ', strip=True) if big_p else "I don't know man"
-    print(day)
-    
+    # 1. Find the <h4> tag that contains "MAJ :"
+    maj_h4 = soup.find("h4", string=re.compile(r"\d{2}/\d{2}/\d{4}"))
+    maj_date = "Not found"
+    if maj_h4:
+        match = re.search(r'\d{2}/\d{2}/\d{4}', maj_h4.text)
+        if match:
+            maj_date = match.group(0)
+
+    # 2. Find the first <ul> that appears after the MAJ heading
+    first_ul_after_maj = maj_h4.find_next("ul") if maj_h4 else None
+
+    # 3. Get the first <li> in that <ul>
+    first_li_text = None
+    if first_ul_after_maj:
+        first_li = first_ul_after_maj.find("li")
+        if first_li:
+            first_li_text = first_li.get_text(strip=True)
+
     send_email(
-        subject="What day is it ?",
-        body=day,
+        subject="Last update {}".format(maj_date),
+        body="Latest news : '{}'".format(first_li_text),
         recipient_emails=RECIPIENTS,
-    )   
+    )
+    
     return 0
 
 
